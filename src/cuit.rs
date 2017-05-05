@@ -1,4 +1,6 @@
 /* Validates and explains a cuit/cuil */
+use common;
+
 #[derive(Debug, PartialEq)]
 pub struct Cuit<'a> {
     id: &'a str,
@@ -11,42 +13,31 @@ pub enum CuitError { Format, Checksum, Kind }
 
 impl<'a> Cuit<'a> {
     pub fn new(id: &str) -> Result<Cuit, CuitError> {
-        if !Self::is_format_valid(id) {
+        if !common::is_all_numeric(id, 11) {
             return Err(CuitError::Format)
         }
         if !Self::is_kind_valid(&id[0..2]) {
             return Err(CuitError::Kind)
         }
-        if !Self::is_checksum_valid(&id.clone(), vec![5,4,3,2,7,6,5,4,3,2]) {
+        if !Self::is_checksum_valid(&id, vec![5,4,3,2,7,6,5,4,3,2]) {
             return Err(CuitError::Checksum)
         }
         Ok(Cuit{
-            id: id.clone(),
+            id: &id,
             kind: &id[0..2],
             person_id: &id[2..10],
         })
     }
     
-    fn is_format_valid(cuit: &str) -> bool {
-        cuit.chars().count() == 11 && cuit.chars().all(|c| c.is_numeric())
-    }
-
     fn is_kind_valid(kind: &str) -> bool {
-        let kind = kind.parse().unwrap();
+        let kind = kind.parse::<u32>().unwrap();
         vec![20, 23, 24, 27, 30, 33, 34].into_iter()
             .find(|&x| x == kind).is_some()
     }
 
     fn is_checksum_valid(payload: &str, mults: Vec<u32>) -> bool {
         let (values, checksum) = payload.split_at(payload.len() - 1);
-        let digits : Vec<u32> = values.chars()
-            .map(|c| c.to_digit(10).unwrap())
-            .collect();
-        let sum : u32 = digits.iter()
-            .zip(mults.iter())
-            .map(|(a,b)| a * b)
-            .sum();
-
+        let sum = common::checksum(values, mults);
         let diff = 11 - (sum % 11);
         let expected = match diff {
             10 => 9,
@@ -54,7 +45,7 @@ impl<'a> Cuit<'a> {
             _ => diff
         };
         
-        expected == checksum.parse().unwrap()
+        expected == checksum.parse::<u32>().unwrap()
     }
 }
 

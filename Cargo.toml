@@ -4,3 +4,9 @@ version = "0.1.0"
 authors = ["nubis <yo@nubis.im>"]
 
 [dependencies]
+jsonapi = "*"
+libc = "*"
+serde_json = "*"
+
+[lib]
+crate-type = ["rlib", "cdylib"]

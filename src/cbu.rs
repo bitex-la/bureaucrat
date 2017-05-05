@@ -1,19 +1,23 @@
 /* Validates and explains a Cbu and all it's parts */
+use common;
+
 #[derive(Debug, PartialEq)]
 pub struct Cbu<'a> {
-    id: &'a str,
-    bank_name: &'a str,
-    bank: &'a str,
-    branch: &'a str,
-    account: &'a str,
+    pub id: &'a str,
+    pub bank_name: &'a str,
+    pub bank: &'a str,
+    pub branch: &'a str,
+    pub account: &'a str,
 }
 
 #[derive(Debug, PartialEq)]
 pub enum CbuError { Format, Checksum }
 
+type CbuResult<'a> = Result<Cbu<'a>, CbuError>;
+
 impl<'a> Cbu<'a> {
-    pub fn new(id: &str) -> Result<Cbu, CbuError> {
-        if !Self::is_format_valid(id) {
+    pub fn new(id: &str) -> CbuResult {
+        if !common::is_all_numeric(id, 22) {
             return Err(CbuError::Format)
         }
         if !Self::is_checksum_valid(&id[0..8], vec![7,1,3,9,7,1,3]) {
@@ -24,7 +28,7 @@ impl<'a> Cbu<'a> {
         }
 
         Ok(Cbu{
-            id: id.clone(),
+            id: &id,
             bank_name: Self::bank_name_lookup(&id[0..3]),
             bank: &id[0..3],
             branch: &id[3..7],
@@ -32,24 +36,12 @@ impl<'a> Cbu<'a> {
         })
     }
     
-    fn is_format_valid(cbu: &str) -> bool {
-        cbu.chars().count() == 22 && cbu.chars().all(|c| c.is_numeric())
-    }
-
     fn is_checksum_valid(payload: &str, mults: Vec<u32>) -> bool {
         let (values, checksum) = payload.split_at(payload.len() - 1);
-        let digits : Vec<u32> = values.chars()
-            .map(|c| c.to_digit(10).unwrap())
-            .collect();
-        let sum : u32 = digits.iter()
-            .zip(mults.iter())
-            .map(|(a,b)| a * b)
-            .sum();
+        let sum = common::checksum(values, mults);
         let expected = (10 - (sum % 10)) % 10;
-        
-        expected == checksum.parse().unwrap()
+        expected == checksum.parse::<u32>().unwrap()
     }
-    
     
     pub fn bank_name_lookup(bank_code: &str) -> &str {
         match bank_code.parse::<i32>().unwrap() {
