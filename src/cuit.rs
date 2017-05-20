@@ -1,31 +1,29 @@
 /* Validates and explains a cuit/cuil */
+use errors::*;
 use common;
 
 #[derive(Debug, PartialEq)]
-pub struct Cuit<'a> {
-    id: &'a str,
-    kind: &'a str,
-    person_id: &'a str,
+pub struct Cuit {
+    pub id: String,
+    pub kind: String,
+    pub person_id: String,
 }
 
-#[derive(Debug, PartialEq)]
-pub enum CuitError { Format, Checksum, Kind }
-
-impl<'a> Cuit<'a> {
-    pub fn new(id: &str) -> Result<Cuit, CuitError> {
-        if !common::is_all_numeric(id, 11) {
-            return Err(CuitError::Format)
+impl Cuit{
+    pub fn new(id: String) -> Result<Cuit> {
+        if !common::is_all_numeric(&id, 11) {
+            bail!(ErrorKind::InvalidCuitFormat)
         }
         if !Self::is_kind_valid(&id[0..2]) {
-            return Err(CuitError::Kind)
+            bail!(ErrorKind::InvalidCuitKind)
         }
         if !Self::is_checksum_valid(&id, vec![5,4,3,2,7,6,5,4,3,2]) {
-            return Err(CuitError::Checksum)
+            bail!(ErrorKind::InvalidCuitChecksum)
         }
         Ok(Cuit{
-            id: &id,
-            kind: &id[0..2],
-            person_id: &id[2..10],
+            id: id.clone(),
+            kind: id[0..2].to_string(),
+            person_id: id[2..10].to_string(),
         })
     }
     
@@ -51,14 +49,15 @@ impl<'a> Cuit<'a> {
 
 #[cfg(test)]
 mod tests {
-    use super::{Cuit, CuitError};
+    use errors::*;
+    use super::Cuit;
     
     #[test]
     fn it_validates_and_explains() {
-        let c = Cuit::new("20319274228").unwrap();
-        assert_eq!(c.id, "20319274228");
-        assert_eq!(c.kind, "20");
-        assert_eq!(c.person_id, "31927422");
+        let c = Cuit::new("20319274228".to_string()).unwrap();
+        assert_eq!(c.id, "20319274228".to_string());
+        assert_eq!(c.kind, "20".to_string());
+        assert_eq!(c.person_id, "31927422".to_string());
     }
 
     #[test]
@@ -68,17 +67,20 @@ mod tests {
             "203192742222",    // too long
             "hello274228"      // non digit chars
         ].iter() {
-            assert_eq!(Cuit::new(cuit), Err(CuitError::Format));
+            assert_error!(ErrorKind::InvalidCuitFormat,
+                Cuit::new(cuit.to_string()))
         }
     }
 
     #[test]
     fn it_validates_checksum() {
-        assert_eq!(Cuit::new("20319274229"), Err(CuitError::Checksum));
+        assert_error!(ErrorKind::InvalidCuitChecksum,
+            Cuit::new("20319274229".to_string()))
     }
 
     #[test]
     fn it_validates_kind() {
-        assert_eq!(Cuit::new("60319274229"), Err(CuitError::Kind));
+        assert_error!(ErrorKind::InvalidCuitKind,
+            Cuit::new("60319274229".to_string()))
     }
 }

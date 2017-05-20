@@ -1,38 +1,34 @@
 /* Validates and explains a Cbu and all it's parts */
+use errors::*;
 use common;
 
 #[derive(Debug, PartialEq)]
-pub struct Cbu<'a> {
-    pub id: &'a str,
-    pub bank_name: &'a str,
-    pub bank: &'a str,
-    pub branch: &'a str,
-    pub account: &'a str,
+pub struct Cbu {
+    pub id: String,
+    pub bank_name: String,
+    pub bank: String,
+    pub branch: String,
+    pub account: String,
 }
 
-#[derive(Debug, PartialEq)]
-pub enum CbuError { Format, Checksum }
-
-type CbuResult<'a> = Result<Cbu<'a>, CbuError>;
-
-impl<'a> Cbu<'a> {
-    pub fn new(id: &str) -> CbuResult {
-        if !common::is_all_numeric(id, 22) {
-            return Err(CbuError::Format)
+impl Cbu {
+    pub fn new(id: String) -> Result<Cbu> {
+        if !common::is_all_numeric(&id, 22) {
+            bail!(ErrorKind::InvalidCbuFormat)
         }
         if !Self::is_checksum_valid(&id[0..8], vec![7,1,3,9,7,1,3]) {
-            return Err(CbuError::Checksum)
+            bail!(ErrorKind::InvalidCbuChecksum)
         }
         if !Self::is_checksum_valid(&id[8..22], vec![3,9,7,1,3,9,7,1,3,9,7,1,3]){
-            return Err(CbuError::Checksum)
+            bail!(ErrorKind::InvalidCbuChecksum)
         }
 
         Ok(Cbu{
-            id: &id,
+            id: id.clone(),
             bank_name: Self::bank_name_lookup(&id[0..3]),
-            bank: &id[0..3],
-            branch: &id[3..7],
-            account: &id[8..22],
+            bank: id[0..3].to_string(),
+            branch: id[3..7].to_string(),
+            account: id[8..22].to_string(),
         })
     }
     
@@ -43,7 +39,7 @@ impl<'a> Cbu<'a> {
         expected == checksum.parse::<u32>().unwrap()
     }
     
-    pub fn bank_name_lookup(bank_code: &str) -> &str {
+    pub fn bank_name_lookup(bank_code: &str) -> String {
         match bank_code.parse::<i32>().unwrap() {
             5 =>   "The Royal Bank of Scotland N.V.",
             7 =>   "Banco de Galicia y Buenos Aires S.A.",
@@ -132,18 +128,19 @@ impl<'a> Cbu<'a> {
             992 => "Provincanje Sociedad Anónima",
             993 => "AFIP Seti DJ",
             _ => "",
-        }
+        }.to_string()
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{Cbu, CbuError};
+    use errors::*;
+    use super::Cbu;
     
     #[test]
     fn it_validates_and_explains() {
-        let c = Cbu::new("0170035040000002373188").unwrap();
-        assert_eq!(c.id, "0170035040000002373188");
+        let c = Cbu::new("0170035040000002373188".to_string()).unwrap();
+        assert_eq!(c.id, "0170035040000002373188".to_string());
         assert_eq!(c.bank_name, "BBVA Banco Francés S.A.");
         assert_eq!(c.bank, "017");
         assert_eq!(c.branch, "0035");
@@ -157,17 +154,20 @@ mod tests {
             "017003504000000237318811",    // too long
             "hello35040000002373188"       // non digit chars
         ].iter() {
-            assert_eq!(Cbu::new(cbu), Err(CbuError::Format));
+			assert_error!(ErrorKind::InvalidCbuFormat,
+                Cbu::new(cbu.to_string()));
         }
     }
 
     #[test]
     fn it_validates_bank_checksum() {
-        assert_eq!(Cbu::new("0170135040000002373188"), Err(CbuError::Checksum));
+        assert_error!(ErrorKind::InvalidCbuChecksum,
+			Cbu::new("0170135040000002373188".to_string()));
     }
 
     #[test]
     fn it_validates_account_checksum() {
-        assert_eq!(Cbu::new("0170035040000003373188"), Err(CbuError::Checksum));
+		assert_error!(ErrorKind::InvalidCbuChecksum,
+        	Cbu::new("0170035040000003373188".to_string()));
     }
 }

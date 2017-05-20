@@ -7,6 +7,7 @@ authors = ["nubis <yo@nubis.im>"]
 jsonapi = "*"
 libc = "*"
 serde_json = "*"
+error-chain = "*"
 
 [lib]
 crate-type = ["rlib", "cdylib"]
