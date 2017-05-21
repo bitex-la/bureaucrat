@@ -10,4 +10,4 @@ addons:
   paths:
   - target/release/libbureaucrat*
 
-script: cargo build --verbose && cargo test --verbose && cargo build --release --verbose && mv target/release/libbureaucrat.* target/ && rm -rf target/release && rm -rf target/debug/
+script: cargo build && cargo test && cargo build --release && mv target/release/libbureaucrat.* target/ && rm -rf target/release && rm -rf target/debug/
