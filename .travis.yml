@@ -5,7 +5,9 @@ os:
   - linux
   - osx
 addons:
-    artifacts: true
-    debug: true
-    paths:
-    - target/release/libbureaucrat*
+  artifacts: true
+  debug: true
+  paths:
+  - target/release/libbureaucrat*
+
+script: cargo build --verbose && cargo test --verbose && cargo build --release --verbose && mv target/release/libbureaucrat.* target/ && rm -rf target/release && rm -rf target/debug/
