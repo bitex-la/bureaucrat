@@ -4,3 +4,8 @@ rust:
 os:
   - linux
   - osx
+addons:
+    artifacts: true
+    debug: true
+    paths:
+    - target/release/libbureaucrat*
