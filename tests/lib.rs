@@ -9,7 +9,7 @@ use std::ffi::{CString, CStr};
 #[test]
 fn encodes_valid_cbu_as_json_api() {
     assert_request_response!(
-        bureaucrat_cbus_create,
+        bureaucrat_post_cbus,
         r#"{
             "data":{
                 "type":"cbu",
@@ -41,7 +41,7 @@ fn encodes_valid_cbu_as_json_api() {
 #[test]
 fn encodes_valid_cuit_as_json_api() {
     assert_request_response!(
-        bureaucrat_cuits_create,
+        bureaucrat_post_cuits,
         r#"{
             "data":{
                 "type":"cuit",
@@ -71,7 +71,7 @@ fn encodes_valid_cuit_as_json_api() {
 #[test]
 fn encodes_empty_request_errors() {
     assert_request_response!(
-        bureaucrat_cbus_create,
+        bureaucrat_post_cbus,
         "{}",
         r#"{"meta":null,
             "included":null,
@@ -94,7 +94,7 @@ fn encodes_empty_request_errors() {
 #[test]
 fn encodes_malformed_errors() {
     assert_request_response!(
-        bureaucrat_cbus_create,
+        bureaucrat_post_cbus,
         "{sanata",
         r#"{"meta":null,
             "included":null,

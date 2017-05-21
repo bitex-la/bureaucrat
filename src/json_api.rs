@@ -49,11 +49,13 @@ impl From<Cuit> for PrimaryData {
     }
 }
 
-pub extern fn bureaucrat_cbus_create(request: *const c_char) -> *mut c_char {
+#[no_mangle]
+pub extern fn bureaucrat_post_cbus(request: *const c_char) -> *mut c_char {
     json_ffi_handler(request, |resource| Cbu::new(resource.id) )
 }
 
-pub extern fn bureaucrat_cuits_create(request: *const c_char) -> *mut c_char {
+#[no_mangle]
+pub extern fn bureaucrat_post_cuits(request: *const c_char) -> *mut c_char {
     json_ffi_handler(request, |resource| Cuit::new(resource.id) )
 }
 
@@ -109,6 +111,7 @@ fn json_ffi_handler<F, P>(raw_request: *const c_char, f: F) -> *mut c_char
     CString::new(serde_json::to_string(&doc).unwrap()).unwrap().into_raw()
 }
 
+#[no_mangle]
 pub extern fn bureaucrat_free(s: *mut c_char){
     unsafe {
         if s.is_null() { return }
