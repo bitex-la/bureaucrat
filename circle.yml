@@ -1,15 +1,7 @@
-## Customize the test machine
 machine:
-	environment:
-		XCODE_SCHEME: bureaucrat
-		XCODE_WORKSPACE: bureaucrat
-	xcode:
-		version: 8.1
 dependencies:
-	override:
-		# The application is expecting xcode to be installed in its normal location
-		- sudo ln -s /Applications/Xcode-7.3.app /Applications/Xcode.app
-		- curl -sf -L https://static.rust-lang.org/rustup.sh | sh /dev/stdin --channel=nightly --yes
+  override:
+    - curl -sf -L https://static.rust-lang.org/rustup.sh | sh /dev/stdin --channel=nightly --yes
 test:
-	override:
-		- cargo test
+  override:
+    - cargo test
